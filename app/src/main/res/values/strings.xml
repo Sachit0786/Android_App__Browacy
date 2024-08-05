@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">BrowAcy</string>
+    <string name="title_activity_sign_in">SignIn</string>
+    <string name="title_activity_log_in">LogIn</string>
+    <string name="title_activity_take_a_selfie">TakeASelfie</string>
+    <string name="title_activity_show_score">ShowScore</string>
+    <string name="title_activity_show_image">ShowImage</string>
+</resources>
