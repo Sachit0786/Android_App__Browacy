@@ -2,6 +2,7 @@
 package com.example.eyebrow_symmetry
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -36,7 +37,15 @@ import com.example.eyebrow_symmetry.camera_elements.CapturedImage
 import com.example.eyebrow_symmetry.ui.theme.EYEBROW_SYMMETRYTheme
 import com.google.android.gms.vision.Frame
 import com.google.android.gms.vision.face.FaceDetector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okio.IOException
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.random.Random
@@ -127,29 +136,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-//    @SuppressLint("Recycle")
-//    private fun upload(imgURI : Uri){
-//        val filesDir = applicationContext.filesDir
-//        val file = File(filesDir,"image.png")
-//
-//        val inputStream = contentResolver.openInputStream(imgURI)
-//        val outputStream = FileOutputStream(file)
-//        inputStream!!.copyTo(outputStream)
-//
-//        val requestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
-//        val part = MultipartBody.Part.createFormData("file",file.name,requestBody)
-//
-//        val retrofit = Retrofit.Builder()
-//            .baseUrl("https://eyebrow-flask-api-2.onrender.com/")
-//            .addConverterFactory(GsonConverterFactory.create())
-//            .build()
-//            .create(ApiService::class.java)
-//
-//        CoroutineScope(Dispatchers.IO).launch {
-//            val response = retrofit.uploadImage(part)
-//            Log.d("ApiInterface", response.toString())
-//        }
-//    }
+
+    private fun upload(imgURI : Uri){
+        val filesDir = applicationContext.filesDir
+        val file = File(filesDir,"image.png")
+
+        val inputStream = contentResolver.openInputStream(imgURI)
+        val outputStream = FileOutputStream(file)
+        inputStream!!.copyTo(outputStream)
+
+        val requestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
+        val part = MultipartBody.Part.createFormData("file",file.name,requestBody)
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://eyebrow-flask-api-2.onrender.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val response = retrofit.uploadImage(part)
+            Log.d("ApiInterface", response.toString())
+        }
+    }
 
     private fun uriToBitmap(uri: Uri): Bitmap? {
         return try {
@@ -160,11 +169,14 @@ class MainActivity : ComponentActivity() {
             null
         }
     }
+
+    @SuppressLint("DefaultLocale")
     private fun getIouScoreFromJSON(): Double {
         val random = Random.Default
         val iouToPercent = random.nextDouble(70.0, 80.0)
         return String.format("%.3f", iouToPercent).toDouble()
     }
+
     private fun takePhoto(
         controller: LifecycleCameraController,
         onPhotoTaken: (Bitmap) -> Unit
@@ -287,65 +299,5 @@ class MainActivity : ComponentActivity() {
         detector.release()
         return faces.isNotEmpty()
     }
-
-//    private fun getEyebrowSymmetryScore(uri: Uri, context: Context): Double {
-//        // Create a face detector
-//        val detector = FaceDetector.Builder(context)
-//            .setTrackingEnabled(false)
-//            .setLandmarkType(FaceDetector.ALL_LANDMARKS)
-//            .build()
-//
-//        // Decode the image from the URI
-//        val inputStream = context.contentResolver.openInputStream(uri)
-//        val bitmap = BitmapFactory.decodeStream(inputStream)
-//
-//        // Create a frame from the bitmap and detect faces
-//        val frame = Frame.Builder().setBitmap(bitmap).build()
-//        val faces = detector.detect(frame)
-//
-//        // Check if any faces were detected
-//        if (faces.isEmpty()) {
-//            detector.release()
-//            throw IllegalArgumentException("No faces detected in the image.")
-//        }
-//
-//        // Assuming there's only one face in the image
-//        val face = faces[0]
-//
-//        // Get landmarks for the left and right eyebrows
-//        val leftEyebrow = getEyebrowLandmarks(face, FaceLandmark.LEFT_EYE)
-//        val rightEyebrow = getEyebrowLandmarks(face, FaceLandmark.RIGHT_EYE)
-//
-//        // Check if both landmarks are available
-//        if (leftEyebrow == null || rightEyebrow == null) {
-//            detector.release()
-//            throw IllegalArgumentException("Left or right eyebrow landmark not found.")
-//        }
-//
-//        // Calculate the distance between the left and right eyebrows
-//        val distance = abs(leftEyebrow.x - rightEyebrow.x)
-//
-//        // Calculate the maximum possible distance
-//        val maxDistance = bitmap.width.toFloat()
-//
-//        // Calculate symmetry score as a percentage
-//        val symmetryScore: Double = ((1 - distance / maxDistance) * 100).toDouble()
-//
-//        // Release the detector
-//        detector.release()
-//
-//        return symmetryScore
-//    }
-//
-//    // Helper function to get the eyebrow landmarks
-//    private fun getEyebrowLandmarks(face: com.google.android.gms.vision.face.Face, landmarkType: Int): PointF? {
-//        val landmarks = face.landmarks
-//        for (landmark in landmarks) {
-//            if (landmark.type == landmarkType) {
-//                return landmark.position
-//            }
-//        }
-//        return null
-//    }
 
 }
